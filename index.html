@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0a0e17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LifeHub">
+<title>LifeHub</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ HOME ============ -->
+  <section id="p-home" class="panel on">
+    <div class="spread" style="margin-bottom:16px">
+      <div><h1 id="greet">Hello 👋</h1><div class="sub" id="greet-date"></div></div>
+      <button class="icon-btn" onclick="openMenu()">⋯</button>
+    </div>
+    <div class="bal-card" onclick="showTab('money')">
+      <div class="bal-label">Bank balance
+        <button class="eye" onclick="event.stopPropagation();toggleEye()">👁</button>
+      </div>
+      <div class="bal-amt" id="home-bal">—</div>
+      <div class="bal-sub" id="home-bal-sub"></div>
+    </div>
+    <div class="grid2">
+      <div class="stat"><div class="l">Spent this month</div><div class="v red" id="home-spent">$0</div></div>
+      <div class="stat"><div class="l">Earned this month</div><div class="v grn" id="home-earned">$0</div></div>
+    </div>
+    <h2>Today</h2>
+    <div class="card" id="home-today"></div>
+    <h2>Overview</h2>
+    <div class="grid2" id="home-grid"></div>
+    <h2 class="spread">Habits today <span class="sub" id="home-habit-count"></span></h2>
+    <div class="card" id="home-habits"></div>
+  </section>
+
+  <!-- ============ MONEY ============ -->
+  <section id="p-money" class="panel">
+    <div class="spread" style="margin-bottom:16px">
+      <h1>Money</h1>
+      <button class="btn btn-g mini" onclick="openBalance()">Set balance</button>
+    </div>
+    <div class="bal-card">
+      <div class="bal-label">Bank balance
+        <button class="eye" onclick="toggleEye()">👁</button>
+      </div>
+      <div class="bal-amt" id="money-bal">—</div>
+      <div class="bal-sub">Auto-updated by every entry you log</div>
+    </div>
+    <div class="row" style="gap:10px;margin-bottom:14px">
+      <button class="btn btn-p" style="background:rgba(255,93,115,.15);color:var(--red);border:1px solid rgba(255,93,115,.35)" onclick="openTx('exp')">− Spending</button>
+      <button class="btn btn-p" style="background:rgba(43,217,132,.13);color:var(--grn);border:1px solid rgba(43,217,132,.35)" onclick="openTx('inc')">+ Income</button>
+    </div>
+    <div class="card">
+      <div class="spread">
+        <button class="icon-btn" onclick="moveMonth(-1)">‹</button>
+        <b id="month-label"></b>
+        <button class="icon-btn" onclick="moveMonth(1)">›</button>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="stat"><div class="l">Income</div><div class="v grn" id="m-inc">$0</div></div>
+        <div class="stat"><div class="l">Spending</div><div class="v red" id="m-exp">$0</div></div>
+      </div>
+      <div class="stat" style="margin-top:10px"><div class="l">Net (saved)</div><div class="v" id="m-net">$0</div></div>
+    </div>
+    <div class="grid2" id="money-stats" style="margin-bottom:12px"></div>
+    <div class="card">
+      <div class="spread"><h2 style="margin:0;font-size:.95rem">🎯 Monthly budget</h2><button class="btn btn-g mini" onclick="openBudget()">Set</button></div>
+      <div id="budget-body" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div class="spread"><h2 style="margin:0;font-size:.95rem">🔁 Recurring payments</h2><button class="btn btn-g mini" onclick="openRecur()">+ Add</button></div>
+      <div id="recur-list" style="margin-top:6px"></div>
+    </div>
+    <div class="card" id="cat-card">
+      <h2 id="cat-title" style="margin:0 0 12px;font-size:.95rem">Where it went</h2>
+      <div class="row" style="gap:16px"><div style="width:132px;flex:none" id="cat-donut"></div><div style="flex:1;min-width:0" id="cat-legend"></div></div>
+    </div>
+    <div class="card"><h2 style="margin:0 0 10px;font-size:.95rem">Income vs spending — 6 months</h2><div id="trend-chart"></div><div class="row" id="trend-legend" style="justify-content:center;gap:16px;margin-top:6px"></div></div>
+    <div class="card"><h2 style="margin:0 0 10px;font-size:.95rem">Spending — last 14 days</h2><div id="spend-spark"></div></div>
+    <h2>Transactions</h2>
+    <div id="tx-list"></div>
+  </section>
+
+  <!-- ============ PLANNER ============ -->
+  <section id="p-plan" class="panel">
+    <div class="spread" style="margin-bottom:14px">
+      <h1>Planner</h1>
+      <div class="row">
+        <button class="icon-btn" onclick="moveCal(-1)">‹</button>
+        <button class="btn btn-g mini" onclick="calToday()">Today</button>
+        <button class="icon-btn" onclick="moveCal(1)">›</button>
+      </div>
+    </div>
+    <div class="spread" style="margin-bottom:8px"><b id="cal-label"></b><span class="sub" id="cal-count"></span></div>
+    <div class="cal-head"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
+    <div class="cal" id="cal-grid"></div>
+    <div class="grid2" id="plan-stats" style="margin:14px 0 12px"></div>
+    <div class="spread" style="margin-bottom:10px">
+      <b id="sel-date-label"></b>
+      <span class="row" style="gap:8px">
+        <button class="btn btn-g mini" onclick="openTask()">+ Task</button>
+        <button class="btn btn-g mini" onclick="openEvent()">+ Event</button>
+      </span>
+    </div>
+    <div id="agenda"></div>
+    <h2 class="spread">All open tasks <span class="sub" id="task-count"></span></h2>
+    <div id="task-list"></div>
+  </section>
+
+  <!-- ============ HEALTH ============ -->
+  <section id="p-gym" class="panel">
+    <div class="spread" style="margin-bottom:16px">
+      <h1>Health</h1>
+      <button class="btn btn-g mini" onclick="openWeight()">⚖️ Log weight</button>
+    </div>
+    <div class="grid2" id="gym-stats" style="margin-bottom:12px"></div>
+    <div class="card">
+      <div class="spread"><h2 style="margin:0;font-size:.95rem">🏃 Exercise reminders</h2><button class="btn btn-g mini" id="remind-toggle" onclick="toggleRemind()">Off</button></div>
+      <div id="remind-body" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div class="spread"><h2 style="margin:0;font-size:.95rem">💧 Water today</h2><span class="sub" id="water-count"></span></div>
+      <div class="row" style="margin-top:12px">
+        <button class="icon-btn" onclick="addWater(-1)">−</button>
+        <div class="hbar" style="height:12px"><div id="water-bar" style="background:var(--blu)"></div></div>
+        <button class="icon-btn" style="background:rgba(59,130,246,.2);border-color:var(--blu)" onclick="addWater(1)">+</button>
+      </div>
+      <div id="water-week" style="margin-top:10px"></div>
+    </div>
+    <div class="card">
+      <div class="spread"><h2 style="margin:0;font-size:.95rem">😴 Sleep</h2><button class="btn btn-g mini" onclick="openSleep()">+ Log</button></div>
+      <div id="sleep-body" style="margin-top:10px"></div>
+    </div>
+    <button class="btn btn-p" style="margin-bottom:14px" onclick="openWorkout()">+ Log workout</button>
+    <div class="card">
+      <div class="spread"><h2 style="margin:0;font-size:.95rem">Body weight</h2><span class="sub" id="weight-latest"></span></div>
+      <div id="weight-chart" style="margin-top:10px"></div>
+    </div>
+    <h2>Workout log</h2>
+    <div id="workout-list"></div>
+  </section>
+
+  <!-- ============ HABITS ============ -->
+  <section id="p-habits" class="panel">
+    <div class="spread" style="margin-bottom:16px">
+      <h1>Habits</h1>
+    </div>
+    <div class="grid2" id="habit-stats" style="margin-bottom:12px"></div>
+    <div class="row" style="margin-bottom:16px">
+      <input class="inp" id="habit-inp" placeholder="New habit… e.g. Gym, Read, Pray" style="margin:0">
+      <button class="icon-btn" style="background:var(--pri);border-color:var(--pri);color:#fff" onclick="addHabit()">+</button>
+    </div>
+    <div id="habit-list"></div>
+  </section>
+
+</div>
+
+<!-- tab bar -->
+<nav class="tabbar">
+  <button class="tab on" id="tb-home" onclick="showTab('home')"><span class="ti">🏠</span>Home</button>
+  <button class="tab" id="tb-money" onclick="showTab('money')"><span class="ti">💰</span>Money</button>
+  <button class="tab" id="tb-plan" onclick="showTab('plan')"><span class="ti">📅</span>Planner</button>
+  <button class="tab" id="tb-gym" onclick="showTab('gym')"><span class="ti">❤️</span>Health</button>
+  <button class="tab" id="tb-habits" onclick="showTab('habits')"><span class="ti">🔥</span>Habits</button>
+</nav>
+
+<!-- item detail page -->
+<div class="page" id="page"><div class="page-in" id="page-body"></div></div>
+
+<!-- modal -->
+<div class="ovl" id="ovl" onclick="if(event.target===this)closeModal()">
+  <div class="sheet"><div class="grab"></div><div id="sheet-body"></div></div>
+</div>
+<div class="banner" id="banner">
+  <div style="flex:1"><b>Time to move! 🏃</b><div class="sub" style="margin-top:2px">Stand up, stretch, do a few squats or a quick walk.</div></div>
+  <button class="btn btn-g mini" onclick="dismissBanner()">OK ✓</button>
+</div>
+<div class="toast" id="toast"></div>
+<input type="file" id="import-file" accept=".json" class="hide" onchange="doImport(this)">
+
+<script src="app.js"></script>
+</body>
+</html>

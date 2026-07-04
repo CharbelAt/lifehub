@@ -1,6 +1,6 @@
-/* LifeHub service worker — makes the installed app work fully offline */
-const CACHE = "lifehub-v1";
-const FILES = ["./", "./LifeHub.html", "./manifest.webmanifest", "./icon.svg", "./icon-maskable.svg"];
+/* LifeHub service worker — offline cache */
+const CACHE = "lifehub-v2";
+const FILES = ["./", "./index.html", "./app.js", "./style.css", "./manifest.webmanifest", "./icon.svg", "./icon-maskable.svg", "./LifeHub.html"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
@@ -23,7 +23,7 @@ self.addEventListener("fetch", e => {
         const copy = res.clone();
         caches.open(CACHE).then(c => c.put(e.request, copy));
         return res;
-      }).catch(() => caches.match("./LifeHub.html"))
+      }).catch(() => caches.match("./index.html"))
     )
   );
 });

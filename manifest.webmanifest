@@ -3,7 +3,7 @@
   "short_name": "LifeHub",
   "description": "Your life, time, money & health — all in one place, fully offline.",
   "id": "./LifeHub.html",
-  "start_url": "./LifeHub.html",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
