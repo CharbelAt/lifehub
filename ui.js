@@ -1,11 +1,11 @@
 "use strict";
-/* ============ ui.js — tabs, router, modal, toast ============ */
+/* ============ ui.js — tabs, drawer, router, modal, toast ============ */
 
-/* ---- tabs ---- */
+/* ---- main tabs (gym lives in its own app, opened from the drawer) ---- */
 let curTab = "home";
 function showTab(t){
   curTab = t;
-  ["home","money","plan","gym","health","habits"].forEach(k => {
+  ["home","money","plan","health","habits"].forEach(k => {
     $("#p-"+k).classList.toggle("on", k===t);
     $("#tb-"+k).classList.toggle("on", k===t);
   });
@@ -16,23 +16,62 @@ function render(){
   if(curTab==="home") renderHome();
   if(curTab==="money") renderMoney();
   if(curTab==="plan") renderPlan();
-  if(curTab==="gym") renderGym();
   if(curTab==="health") renderHealth();
   if(curTab==="habits") renderHabits();
 }
 
-/* ---- detail-page router: #d/<kind>/<id> ---- */
+/* ---- left drawer ---- */
+function openDrawer(){
+  buildDrawer();
+  $("#drawer").classList.add("on");
+  $("#drawer-ovl").classList.add("on");
+}
+function closeDrawer(){
+  $("#drawer").classList.remove("on");
+  $("#drawer-ovl").classList.remove("on");
+}
+function openMenu(){ openDrawer(); } /* legacy alias */
+
+/* ---- gym app open/exit ---- */
+function openGym(){ location.hash = "#g/" + (typeof gymTab !== "undefined" && gymTab ? gymTab : "train"); }
+function exitGym(){ history.back(); }
+
+/* ---- router ----
+   #d/<kind>/<id> → full-screen detail page (over anything)
+   #g/<tab>       → gym app with its own tabs
+   (empty)        → main app */
 function openDetail(kind, id){ location.hash = "#d/" + kind + "/" + id; }
 function goBack(){ if(location.hash) history.back(); else hidePage(); }
-function hidePage(){ $("#page").classList.remove("on"); render(); }
+function hidePage(){
+  $("#page").classList.remove("on");
+  if($("#gymapp").classList.contains("on")) renderGymApp(); else render();
+}
 function route(){
-  const m = location.hash.match(/^#d\/(\w+)\/(.+)$/);
-  if(!m){ hidePage(); return; }
-  const html = pageFor(m[1], decodeURIComponent(m[2]));
-  if(html === null){ hidePage(); if(location.hash) history.replaceState(null, "", location.pathname + location.search); return; }
-  $("#page-body").innerHTML = html;
-  $("#page").classList.add("on");
-  $("#page").scrollTop = 0;
+  const d = location.hash.match(/^#d\/(\w+)\/(.+)$/);
+  if(d){
+    const html = pageFor(d[1], decodeURIComponent(d[2]));
+    if(html === null){
+      $("#page").classList.remove("on");
+      history.replaceState(null, "", location.pathname + location.search);
+      $("#gymapp").classList.remove("on");
+      render();
+      return;
+    }
+    $("#page-body").innerHTML = html;
+    $("#page").classList.add("on");
+    $("#page").scrollTop = 0;
+    return;
+  }
+  $("#page").classList.remove("on");
+  const g = location.hash.match(/^#g\/(\w+)$/);
+  if(g){
+    gymTab = g[1];
+    $("#gymapp").classList.add("on");
+    renderGymApp();
+  } else {
+    $("#gymapp").classList.remove("on");
+    render();
+  }
 }
 window.addEventListener("hashchange", route);
 

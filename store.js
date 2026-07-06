@@ -61,7 +61,11 @@ const Store = {
   load(){
     try{
       const v2 = JSON.parse(localStorage.getItem(KEY));
-      if(v2 && typeof v2 === "object") return normalize(v2);
+      if(v2 && typeof v2 === "object"){
+        const s = normalize(v2);
+        localStorage.setItem(KEY, JSON.stringify(s)); /* persist normalized shape */
+        return s;
+      }
     }catch(e){}
     try{
       const v1 = JSON.parse(localStorage.getItem(OLDKEY));

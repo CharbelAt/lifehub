@@ -157,6 +157,24 @@ input[type="date"],input[type="time"]{color-scheme:dark}
 .banner{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;max-width:496px;margin:0 auto;background:var(--card2);border:1px solid var(--pri);border-radius:16px;padding:14px;display:none;align-items:center;gap:12px;z-index:300;box-shadow:0 10px 40px rgba(0,0,0,.55)}
 .banner.on{display:flex;animation:up .25s ease}
 
+/* left drawer */
+.drawer-ovl{position:fixed;inset:0;background:rgba(4,6,12,.6);z-index:115;opacity:0;pointer-events:none;transition:.22s}
+.drawer-ovl.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:80%;max-width:310px;background:#0e1422;border-right:1px solid var(--line);z-index:120;transform:translateX(-103%);transition:transform .24s ease;padding:calc(18px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));overflow-y:auto}
+.drawer.on{transform:none}
+
+/* gym app (own tab bar) */
+.gymapp{position:fixed;inset:0;background:var(--bg);z-index:70;overflow-y:auto;display:none}
+.gymapp.on{display:block;animation:slide .2s ease}
+.ga-in{max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
+.ga-tabs{display:flex;gap:6px;margin-bottom:14px}
+.ga-tabs button{flex:1;background:var(--card);border:1px solid var(--line);color:var(--mut);padding:10px 4px;border-radius:12px;font-weight:700;font-family:inherit;font-size:.78rem;cursor:pointer}
+.ga-tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+
+/* exercise svg icons */
+.gico svg{width:20px;height:20px;color:var(--mut);display:block}
+.gico-big svg{width:30px;height:30px;color:var(--pri2);display:block}
+
 /* gym hub hero */
 .gym-hero{background:linear-gradient(135deg,#0da963 0%,#0a8a52 55%,#0ea5e9 140%);border-radius:22px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden}
 .gym-hero::after{content:"🏋️";position:absolute;font-size:5rem;opacity:.16;right:-8px;bottom:-18px}

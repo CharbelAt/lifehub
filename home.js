@@ -53,7 +53,7 @@ function renderHome(){
        ${sparkLineSVG(spend14, "#ff5d73")}</div>` +
     statCard("✅ Tasks", open.length + " open", "pri", over.length ? `⚠️ ${over.length} overdue` : "all on track ✓", "plan") +
     statCard("📅 This week", evWeek + (evWeek===1?" event":" events"), "amb", evs.length + " today", "plan") +
-    statCard("🏋️ Gym", gw.length + (gw.length===1?" workout":" workouts"), "grn", gw.reduce((a,w)=>a+(w.dur||0),0) + " min this week", "gym") +
+    `<div class="stat" style="cursor:pointer" onclick="openGym()"><div class="l">🏋️ Gym</div><div class="v grn">${gw.length + (gw.length===1?" workout":" workouts")}</div><div class="l" style="margin-top:3px">${gw.reduce((a,w)=>a+(w.dur||0),0)} min this week</div></div>` +
     statCard("🔥 Habits", S.habits.length ? Math.round(habDone/S.habits.length*100) + "%" : "—", "grn", S.habits.length ? habDone + "/" + S.habits.length + " done today" : "none yet", "habits") +
     statCard("💧 Water", waterT + "/" + S.waterGoal, "blu", "glasses today", "health") +
     statCard("😴 Sleep", slLast ? slLast + "h" : "—", "amb", slAvg ? "7-day avg " + slAvg + "h" : "log your sleep", "health");

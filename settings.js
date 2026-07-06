@@ -1,15 +1,23 @@
 "use strict";
 /* ============ settings.js — menu, categories manager, backup ============ */
 
-function openMenu(){
-  openModal(`<h3>Settings</h3>
-    <div class="menu-item" onclick="openName()">👤 Change my name</div>
-    <div class="menu-item" onclick="openCatManager()">🏷️ Manage categories</div>
-    <div class="menu-item" onclick="openWaterGoal()">💧 Water goal (${S.waterGoal} glasses)</div>
-    <div class="menu-item" onclick="doExport()">💾 Back up my data (download)</div>
-    <div class="menu-item" onclick="closeModal();document.getElementById('import-file').click()">📥 Restore from backup</div>
-    <div class="menu-item" style="color:var(--red)" onclick="resetAll()">🗑️ Erase everything</div>
-    <p class="sub" style="margin-top:14px">All data lives only on this device. Back up now and then so you never lose it.</p>`);
+/* drawer content (ui.js opens/closes the drawer itself) */
+function buildDrawer(){
+  $("#drawer-body").innerHTML = `
+    <div style="padding:4px 4px 16px">
+      <div style="font-size:1.25rem;font-weight:800">⚡ LifeHub</div>
+      <div class="sub">${esc(S.name)}</div>
+    </div>
+    <div class="date-head" style="margin:0 0 4px">Apps</div>
+    <div class="menu-item" onclick="closeDrawer();openGym()"><span class="gico">${GYM_SVG.barbell}</span> Gym</div>
+    <div class="date-head" style="margin:16px 0 4px">Settings</div>
+    <div class="menu-item" onclick="closeDrawer();openName()">👤 Change my name</div>
+    <div class="menu-item" onclick="closeDrawer();openCatManager()">🏷️ Manage categories</div>
+    <div class="menu-item" onclick="closeDrawer();openWaterGoal()">💧 Water goal (${S.waterGoal} glasses)</div>
+    <div class="menu-item" onclick="closeDrawer();doExport()">💾 Back up my data</div>
+    <div class="menu-item" onclick="closeDrawer();document.getElementById('import-file').click()">📥 Restore from backup</div>
+    <div class="menu-item" style="color:var(--red)" onclick="closeDrawer();resetAll()">🗑️ Erase everything</div>
+    <p class="sub" style="margin-top:16px;font-size:.75rem">All data lives only on this device. Back up now and then so you never lose it.</p>`;
 }
 function openName(){
   openModal(`<h3>Your name</h3><input class="inp" id="nm-inp" value="${escq(S.name)}">

@@ -19,8 +19,10 @@
   <!-- ============ HOME ============ -->
   <section id="p-home" class="panel on">
     <div class="spread" style="margin-bottom:16px">
-      <div><h1 id="greet">Hello 👋</h1><div class="sub" id="greet-date"></div></div>
-      <button class="icon-btn" onclick="openMenu()">⋯</button>
+      <div class="row">
+        <button class="icon-btn" onclick="openDrawer()">☰</button>
+        <div><h1 id="greet">Hello 👋</h1><div class="sub" id="greet-date"></div></div>
+      </div>
     </div>
     <div class="bal-card" onclick="showTab('money')">
       <div class="bal-label">Bank balance
@@ -44,7 +46,7 @@
   <!-- ============ MONEY ============ -->
   <section id="p-money" class="panel">
     <div class="spread" style="margin-bottom:16px">
-      <h1>Money</h1>
+      <div class="row"><button class="icon-btn" onclick="openDrawer()">☰</button><h1>Money</h1></div>
       <button class="btn btn-g mini" onclick="openBalance()">Set balance</button>
     </div>
     <div class="bal-card">
@@ -92,7 +94,7 @@
   <!-- ============ PLANNER ============ -->
   <section id="p-plan" class="panel">
     <div class="spread" style="margin-bottom:14px">
-      <h1>Planner</h1>
+      <div class="row"><button class="icon-btn" onclick="openDrawer()">☰</button><h1>Planner</h1></div>
       <div class="row">
         <button class="icon-btn" onclick="moveCal(-1)">‹</button>
         <button class="btn btn-g mini" onclick="calToday()">Today</button>
@@ -115,44 +117,10 @@
     <div id="task-list"></div>
   </section>
 
-  <!-- ============ GYM ============ -->
-  <section id="p-gym" class="panel">
-    <div class="spread" style="margin-bottom:14px">
-      <h1>Gym</h1>
-      <button class="btn btn-g mini" onclick="openExLib(false)">📚 Exercise library</button>
-    </div>
-    <div class="gym-hero" id="gym-hero"></div>
-    <div class="grid2" id="gym-stats" style="margin-bottom:12px"></div>
-    <div class="card">
-      <div class="spread"><h2 style="margin:0;font-size:.95rem">📋 Routines</h2><button class="btn btn-g mini" onclick="startRoutineBuilder()">+ New</button></div>
-      <div id="routine-list" style="margin-top:6px"></div>
-    </div>
-    <div class="card" id="prog-card" style="display:none">
-      <h2 style="margin:0 0 10px;font-size:.95rem">📈 Exercise progress</h2>
-      <div class="seg" id="prog-metric"></div>
-      <div class="chips" id="prog-chips"></div>
-      <div id="prog-chart"></div>
-    </div>
-    <div class="card" id="pr-card" style="display:none">
-      <h2 style="margin:0 0 6px;font-size:.95rem">🏆 Personal records</h2>
-      <div id="pr-list"></div>
-    </div>
-    <div class="card" id="vol-card" style="display:none">
-      <h2 style="margin:0 0 10px;font-size:.95rem">Training volume — 8 weeks</h2>
-      <div id="vol-chart"></div>
-    </div>
-    <div class="card" id="type-card" style="display:none">
-      <h2 style="margin:0 0 12px;font-size:.95rem">Workout split — this month</h2>
-      <div class="row" style="gap:16px"><div style="width:132px;flex:none" id="type-pie"></div><div style="flex:1;min-width:0" id="type-legend"></div></div>
-    </div>
-    <h2>Workout log</h2>
-    <div id="workout-list"></div>
-  </section>
-
   <!-- ============ HEALTH ============ -->
   <section id="p-health" class="panel">
     <div class="spread" style="margin-bottom:16px">
-      <h1>Health</h1>
+      <div class="row"><button class="icon-btn" onclick="openDrawer()">☰</button><h1>Health</h1></div>
       <button class="btn btn-g mini" onclick="openWeight()">⚖️ Log weight</button>
     </div>
     <div class="card">
@@ -181,7 +149,7 @@
   <!-- ============ HABITS ============ -->
   <section id="p-habits" class="panel">
     <div class="spread" style="margin-bottom:16px">
-      <h1>Habits</h1>
+      <div class="row"><button class="icon-btn" onclick="openDrawer()">☰</button><h1>Habits</h1></div>
     </div>
     <div class="grid2" id="habit-stats" style="margin-bottom:12px"></div>
     <div class="row" style="margin-bottom:16px">
@@ -198,10 +166,30 @@
   <button class="tab on" id="tb-home" onclick="showTab('home')"><span class="ti">🏠</span>Home</button>
   <button class="tab" id="tb-money" onclick="showTab('money')"><span class="ti">💰</span>Money</button>
   <button class="tab" id="tb-plan" onclick="showTab('plan')"><span class="ti">📅</span>Planner</button>
-  <button class="tab" id="tb-gym" onclick="showTab('gym')"><span class="ti">🏋️</span>Gym</button>
   <button class="tab" id="tb-health" onclick="showTab('health')"><span class="ti">❤️</span>Health</button>
   <button class="tab" id="tb-habits" onclick="showTab('habits')"><span class="ti">🔥</span>Habits</button>
 </nav>
+
+<!-- left drawer -->
+<div class="drawer-ovl" id="drawer-ovl" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer"><div id="drawer-body"></div></aside>
+
+<!-- gym app (own tabs) -->
+<div class="gymapp" id="gymapp">
+  <div class="ga-in">
+    <div class="page-head">
+      <button class="icon-btn" onclick="exitGym()">‹</button>
+      <h1>Gym</h1>
+    </div>
+    <div class="ga-tabs">
+      <button id="gt-train" class="on" onclick="setGymTab('train')">Train</button>
+      <button id="gt-library" onclick="setGymTab('library')">Library</button>
+      <button id="gt-stats" onclick="setGymTab('stats')">Stats</button>
+      <button id="gt-history" onclick="setGymTab('history')">History</button>
+    </div>
+    <div id="ga-body"></div>
+  </div>
+</div>
 
 <!-- item detail page -->
 <div class="page" id="page"><div class="page-in" id="page-body"></div></div>
