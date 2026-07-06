@@ -117,19 +117,18 @@
 
   <!-- ============ GYM ============ -->
   <section id="p-gym" class="panel">
-    <div class="spread" style="margin-bottom:14px">
+    <div class="spread" style="margin-bottom:16px">
       <h1>Gym</h1>
-      <button class="btn btn-g mini" onclick="openExLib(false)">📚 Exercise library</button>
+      <button class="btn btn-g mini" onclick="openRoutineModal()">+ New routine</button>
     </div>
-    <div class="gym-hero" id="gym-hero"></div>
     <div class="grid2" id="gym-stats" style="margin-bottom:12px"></div>
+    <button class="btn btn-p" style="margin-bottom:14px" onclick="openWorkout()">+ Log workout</button>
     <div class="card">
-      <div class="spread"><h2 style="margin:0;font-size:.95rem">📋 Routines</h2><button class="btn btn-g mini" onclick="startRoutineBuilder()">+ New</button></div>
-      <div id="routine-list" style="margin-top:6px"></div>
+      <h2 style="margin:0 0 6px;font-size:.95rem">📋 Routines</h2>
+      <div id="routine-list"></div>
     </div>
     <div class="card" id="prog-card" style="display:none">
       <h2 style="margin:0 0 10px;font-size:.95rem">📈 Exercise progress</h2>
-      <div class="seg" id="prog-metric"></div>
       <div class="chips" id="prog-chips"></div>
       <div id="prog-chart"></div>
     </div>
@@ -223,7 +222,6 @@
 <script src="ui.js"></script>
 <script src="money.js"></script>
 <script src="planner.js"></script>
-<script src="exlib.js"></script>
 <script src="gym.js"></script>
 <script src="health.js"></script>
 <script src="habits.js"></script>

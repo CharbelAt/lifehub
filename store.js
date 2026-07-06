@@ -16,17 +16,27 @@ function DEF(){
   return JSON.parse(JSON.stringify({
     v:2, name:"hiuc", balance:null, hideBal:false, budget:null, waterGoal:8,
     cats: DEFCATS, wtypes: DEFWTYPES,
-    tx:[], tasks:[], events:[], habits:[], workouts:[], weights:[], recur:[], routines:[],
-    water:{}, sleep:{},
+    tx:[], tasks:[], events:[], habits:[], workouts:[], weights:[], recur:[], routines:[], customEx:[],
+    water:{}, sleep:{}, activeWo:null,
     remind:{ on:false, every:3, from:9, to:22, last:0 }
   }));
+}
+
+/* per-set migration: {sets:4,reps:8,kg:60} → sets:[{reps:8,kg:60} ×4] */
+function normEx(list){
+  return (list||[]).map(x => {
+    if(Array.isArray(x.sets)) return { n:x.n, sets:x.sets.map(s=>({reps:+s.reps||0, kg:+s.kg||0})) };
+    const cnt = Math.min(Math.max(parseInt(x.sets,10)||1,1),10);
+    const one = { reps:+x.reps||0, kg:+x.kg||0 };
+    return { n:x.n, sets:Array.from({length:cnt}, ()=>({...one})) };
+  }).filter(x => x.n);
 }
 
 /* Accepts any backup/legacy object and returns a valid state. */
 function normalize(d){
   const s = DEF();
   if(!d || typeof d !== "object") return s;
-  const copy = ["name","balance","hideBal","budget","waterGoal","tx","tasks","habits","workouts","weights","recur","routines"];
+  const copy = ["name","balance","hideBal","budget","waterGoal","tx","tasks","habits","workouts","weights","recur","routines","customEx","activeWo"];
   copy.forEach(k => { if(d[k] !== undefined) s[k] = d[k]; });
   if(d.water && typeof d.water === "object") s.water = d.water;
   if(d.sleep && typeof d.sleep === "object") s.sleep = d.sleep;
@@ -37,9 +47,13 @@ function normalize(d){
   if(Array.isArray(d.events)){
     s.events = d.events.map(e => e.start ? e : ({ id:e.id, title:e.title, start:e.date, end:e.date, time:e.time||"", note:e.note||"" }));
   }
-  /* workouts: ensure structured exercise list */
-  s.workouts = (s.workouts||[]).map(w => Object.assign({}, w, { ex: Array.isArray(w.ex) ? w.ex : [] }));
+  /* workouts & routines: per-set exercise structure */
+  s.workouts = (s.workouts||[]).map(w => Object.assign({}, w, { ex: normEx(w.ex) }));
   if(!Array.isArray(s.routines)) s.routines = [];
+  s.routines = s.routines.map(r => Object.assign({}, r, { ex: normEx(r.ex) }));
+  if(!Array.isArray(s.customEx)) s.customEx = [];
+  if(s.activeWo && typeof s.activeWo === "object") s.activeWo.ex = normEx(s.activeWo.ex);
+  else s.activeWo = null;
   return s;
 }
 

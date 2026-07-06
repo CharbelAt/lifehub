@@ -157,6 +157,20 @@ input[type="date"],input[type="time"]{color-scheme:dark}
 .banner{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;max-width:496px;margin:0 auto;background:var(--card2);border:1px solid var(--pri);border-radius:16px;padding:14px;display:none;align-items:center;gap:12px;z-index:300;box-shadow:0 10px 40px rgba(0,0,0,.55)}
 .banner.on{display:flex;animation:up .25s ease}
 
+/* gym hub hero */
+.gym-hero{background:linear-gradient(135deg,#0da963 0%,#0a8a52 55%,#0ea5e9 140%);border-radius:22px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden}
+.gym-hero::after{content:"🏋️";position:absolute;font-size:5rem;opacity:.16;right:-8px;bottom:-18px}
+
+/* per-set rows (session logger) */
+.set-head{display:grid;grid-template-columns:26px 54px 1fr 1fr 30px 24px;gap:6px;font-size:.62rem;color:var(--dim);text-transform:uppercase;font-weight:700;margin-bottom:4px;padding:0 2px}
+.set-row{display:grid;grid-template-columns:26px 54px 1fr 1fr 30px 24px;gap:6px;align-items:center;margin-bottom:6px}
+.set-row .inp{margin:0;padding:9px 8px;font-size:.88rem;border-radius:10px;text-align:center}
+.set-row .sn{font-size:.8rem;font-weight:700;color:var(--mut);text-align:center}
+.set-row .sp{font-size:.72rem;color:var(--dim);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.set-row .sd{width:28px;height:28px;border-radius:9px;border:2px solid var(--line);background:none;color:transparent;cursor:pointer;font-size:.75rem}
+.set-row .sd.on{background:var(--grn);border-color:var(--grn);color:#06281a}
+.set-row.done .inp{border-color:rgba(43,217,132,.4);color:var(--grn)}
+
 /* exercise editor */
 .ex-row{display:grid;grid-template-columns:1fr 50px 50px 60px 26px;gap:6px;align-items:center;margin-bottom:6px}
 .ex-row .inp{margin:0;padding:10px 8px;font-size:.85rem;border-radius:10px}

@@ -69,7 +69,7 @@ function trendSVG(months){
 }
 
 /* line chart with dots + last-value label, for exercise progress */
-function progressSVG(vals, color){
+function progressSVG(vals, color, unit){
   if(vals.length < 2) return `<div class="sub" style="padding:4px 0">Log this exercise at least twice to see progress.</div>`;
   const min = Math.min.apply(null,vals), max = Math.max.apply(null,vals), sp = (max-min) || 1;
   const X = i => 4 + (i/(vals.length-1))*84;
@@ -81,7 +81,7 @@ function progressSVG(vals, color){
   return `<svg viewBox="0 0 100 34" style="width:100%;height:80px;display:block">
     <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
     ${dots}
-    <text x="${Math.min(lx,88).toFixed(1)}" y="${Math.max(ly-3,4).toFixed(1)}" font-size="4.4" font-weight="700" fill="#eef1f8" text-anchor="middle">${vals[vals.length-1]}kg</text></svg>`;
+    <text x="${Math.min(lx,88).toFixed(1)}" y="${Math.max(ly-3,4).toFixed(1)}" font-size="4.4" font-weight="700" fill="#eef1f8" text-anchor="middle">${vals[vals.length-1]}${unit === undefined ? "kg" : unit}</text></svg>`;
 }
 
 function statCard(l, v, cls, sub, tab){

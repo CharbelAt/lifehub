@@ -43,6 +43,8 @@ function pageFor(kind, id){
   if(kind==="wo") return pageWorkout(id);
   if(kind==="ex") return pageExercise(id);
   if(kind==="rt") return pageRoutine(id);
+  if(kind==="session") return pageSession();
+  if(kind==="exlib") return pageExLib();
   return null;
 }
 function pageHead(title){
