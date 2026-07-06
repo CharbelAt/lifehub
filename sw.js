@@ -1,5 +1,5 @@
-/* LifeHub service worker — offline cache */
-const CACHE = "lifehub-v2";
+/* LifeHub service worker — offline cache + notifications */
+const CACHE = "lifehub-v3";
 const FILES = ["./", "./index.html", "./app.js", "./style.css", "./manifest.webmanifest", "./icon.svg", "./icon-maskable.svg", "./LifeHub.html"];
 
 self.addEventListener("install", e => {
@@ -26,4 +26,25 @@ self.addEventListener("fetch", e => {
       }).catch(() => caches.match("./index.html"))
     )
   );
+});
+
+/* tapping a notification opens / focuses the app */
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+      for(const c of list){ if("focus" in c) return c.focus(); }
+      return clients.openWindow("./index.html");
+    })
+  );
+});
+
+/* daily nudge even when the app is closed (supported Android, installed PWA) */
+self.addEventListener("periodicsync", e => {
+  if(e.tag === "lifehub-daily"){
+    e.waitUntil(self.registration.showNotification("LifeHub 🏃", {
+      body: "Time to move — and don't forget to log today.",
+      icon: "icon.svg", badge: "icon.svg", tag: "lifehub-daily"
+    }));
+  }
 });

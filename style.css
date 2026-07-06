@@ -157,4 +157,9 @@ input[type="date"],input[type="time"]{color-scheme:dark}
 .banner{position:fixed;top:calc(12px + env(safe-area-inset-top));left:12px;right:12px;max-width:496px;margin:0 auto;background:var(--card2);border:1px solid var(--pri);border-radius:16px;padding:14px;display:none;align-items:center;gap:12px;z-index:300;box-shadow:0 10px 40px rgba(0,0,0,.55)}
 .banner.on{display:flex;animation:up .25s ease}
 
+/* exercise editor */
+.ex-row{display:grid;grid-template-columns:1fr 50px 50px 60px 26px;gap:6px;align-items:center;margin-bottom:6px}
+.ex-row .inp{margin:0;padding:10px 8px;font-size:.85rem;border-radius:10px}
+.ex-head{display:grid;grid-template-columns:1fr 50px 50px 60px 26px;gap:6px;font-size:.65rem;color:var(--dim);text-transform:uppercase;font-weight:700;margin-bottom:4px;padding:0 2px}
+
 .hide{display:none!important}

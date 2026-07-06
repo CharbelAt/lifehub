@@ -41,6 +41,8 @@ function normalize(d){
   if(Array.isArray(d.events)){
     s.events = d.events.map(e => e.start ? e : ({ id:e.id, title:e.title, start:e.date, end:e.date, time:e.time||"", note:e.note||"" }));
   }
+  /* workouts: ensure structured exercise list exists */
+  s.workouts = (s.workouts||[]).map(w => Object.assign({}, w, { ex: Array.isArray(w.ex) ? w.ex : [] }));
   return s;
 }
 
@@ -319,8 +321,44 @@ function delCategory(kind, name){
     save(); openCatManager(); toast("Removed");
   });
 }
+function openEditCat(kind, name){
+  const list = kind === "w" ? S.wtypes : S.cats[kind];
+  const c = list.find(x => x.n === name); if(!c) return;
+  window._editCat = { kind, name };
+  openModal(`<h3>Edit category</h3>
+    <div class="half">
+      <div><label class="f">Emoji</label><input class="inp" id="ec-e" value="${escq(c.e)}" maxlength="4"></div>
+      <div><label class="f">Name</label><input class="inp" id="ec-n" value="${escq(c.n)}"></div>
+    </div>
+    <p class="sub" style="margin-bottom:12px">Renaming also updates every record that uses this category.</p>
+    <div class="row">
+      <button class="btn btn-p" style="flex:1" onclick="saveEditCat()">Save</button>
+      <button class="btn btn-d" onclick="delCategory('${kind}','${escq(name)}')">🗑</button>
+    </div>`);
+  focusIn("#ec-n");
+}
+function saveEditCat(){
+  const { kind, name } = window._editCat;
+  const e = $("#ec-e").value.trim() || "🏷️";
+  const n = $("#ec-n").value.trim();
+  if(!n){ toast("Give it a name"); return; }
+  const list = kind === "w" ? S.wtypes : S.cats[kind];
+  if(n !== name && list.some(c => c.n.toLowerCase() === n.toLowerCase())){ toast("That name already exists"); return; }
+  const c = list.find(x => x.n === name); if(!c) return;
+  c.e = e; c.n = n;
+  if(n !== name){
+    if(kind === "w"){
+      S.workouts.forEach(w => { if(w.type === name) w.type = n; });
+    } else {
+      S.tx.forEach(t => { if(t.type === kind && t.cat === name) t.cat = n; });
+      S.recur.forEach(r => { if(r.type === kind && r.cat === name) r.cat = n; });
+    }
+  }
+  save(); render(); openCatManager(); toast("Saved ✓");
+}
 function openCatManager(){
   const row = (kind, c) => `<div class="cat-row"><span class="ce">${c.e}</span><span class="cn">${esc(c.n)}</span>
+    <button class="x" onclick="openEditCat('${kind}','${escq(c.n)}')">✏️</button>
     <button class="x" onclick="delCategory('${kind}','${escq(c.n)}')">✕</button></div>`;
   openModal(`<h3>Manage categories</h3>
     <label class="f">Spending</label>${S.cats.exp.map(c=>row("exp",c)).join("")}
@@ -828,24 +866,71 @@ function gymWeek(){
   const mon = weekStart(todayStr());
   return S.workouts.filter(w => w.date >= mon && w.date <= addDays(mon,6));
 }
+function bestKg(name, exceptId){
+  let best = 0;
+  S.workouts.forEach(w => {
+    if(w.id === exceptId) return;
+    (w.ex||[]).forEach(x => { if(x.n.toLowerCase() === name.toLowerCase() && x.kg > best) best = x.kg; });
+  });
+  return best;
+}
+function volume(w){ return (w.ex||[]).reduce((a,x)=>a + (x.sets||0)*(x.reps||0)*(x.kg||0), 0); }
+function fmtVol(v){ return v >= 1000 ? (v/1000).toFixed(1) + " t" : Math.round(v) + " kg"; }
+
+function exRowHTML(i, x){
+  return `<div class="ex-row">
+    <input class="inp exn" placeholder="Exercise" value="${x?escq(x.n):""}">
+    <input class="inp exs" inputmode="numeric" placeholder="4" value="${x && x.sets ? x.sets : ""}">
+    <input class="inp exr" inputmode="numeric" placeholder="8" value="${x && x.reps ? x.reps : ""}">
+    <input class="inp exk" inputmode="decimal" placeholder="60" value="${x && x.kg ? x.kg : ""}">
+    <button class="x" onclick="rmExRow(${i})">✕</button></div>`;
+}
+function readExRaw(){
+  return [...document.querySelectorAll("#ex-list .ex-row")].map(r => ({
+    n: r.querySelector(".exn").value,
+    sets: r.querySelector(".exs").value,
+    reps: r.querySelector(".exr").value,
+    kg: r.querySelector(".exk").value
+  }));
+}
+function readExClean(){
+  return readExRaw().map(x => ({
+    n: String(x.n).trim(),
+    sets: parseInt(x.sets,10) || 0,
+    reps: parseInt(x.reps,10) || 0,
+    kg: parseFloat(String(x.kg).replace(",",".")) || 0
+  })).filter(x => x.n);
+}
+function drawExRows(){
+  $("#ex-list").innerHTML =
+    (M.ex.length ? `<div class="ex-head"><span>Exercise</span><span>Sets</span><span>Reps</span><span>Kg</span><span></span></div>` : "") +
+    M.ex.map((x,i)=>exRowHTML(i,x)).join("");
+}
+function addExRow(){ M.ex = readExRaw(); M.ex.push({n:"",sets:"",reps:"",kg:""}); drawExRows(); }
+function rmExRow(i){ M.ex = readExRaw(); M.ex.splice(i,1); drawExRows(); }
+
 function openWorkout(editId){
   const old = editId ? S.workouts.find(w=>w.id===editId) : null;
-  M = { wt: old ? old.type : S.wtypes[0].n, editId: editId || null };
+  M = { wt: old ? old.type : S.wtypes[0].n, editId: editId || null, ex: old ? (old.ex||[]).map(x=>({...x})) : [] };
   window._reopen = () => openWorkout(M.editId);
   openModal(`<h3>${old ? "Edit workout" : "Log workout"}</h3>
     <label class="f">Type</label>
     <div class="chips" id="w-types"></div>
-    <label class="f">Duration (minutes)</label>
-    <input class="inp" id="w-dur" inputmode="numeric" placeholder="60" value="${old && old.dur ? old.dur : ""}">
-    <label class="f">What did you do? (optional)</label>
-    <input class="inp" id="w-note" placeholder="e.g. bench 4×8 60kg, squats, 5km run…" value="${old?escq(old.note):""}">
-    <label class="f">Date</label>
-    <input class="inp" type="date" id="w-date" value="${old?old.date:todayStr()}">
+    <div class="half">
+      <div><label class="f">Duration (min)</label><input class="inp" id="w-dur" inputmode="numeric" placeholder="60" value="${old && old.dur ? old.dur : ""}"></div>
+      <div><label class="f">Date</label><input class="inp" type="date" id="w-date" value="${old?old.date:todayStr()}"></div>
+    </div>
+    <label class="f">Exercises</label>
+    <div id="ex-list"></div>
+    <button class="btn btn-g mini" style="margin-bottom:12px" onclick="addExRow()">+ Add exercise</button>
+    <label class="f">Note (optional)</label>
+    <input class="inp" id="w-note" placeholder="How did it go?" value="${old?escq(old.note):""}">
     <button class="btn btn-p" onclick="saveWorkout()">${old ? "Save changes" : "Save workout"}</button>`);
   drawWTypes();
+  drawExRows();
 }
 function drawWTypes(){
-  window._pickW = n => { M.wt = n; drawWTypes(); };
+  window._pickW = n => { M.wt = n; M.ex = readExRaw(); drawWTypes(); drawExRows(); };
   $("#w-types").innerHTML = S.wtypes.map(w =>
     `<button class="chip ${M.wt===w.n?"on":""}" onclick="_pickW('${escq(w.n)}')">${w.e} ${esc(w.n)}</button>`).join("") +
     `<button class="chip add" onclick="openNewWType()">+ New</button>`;
@@ -854,14 +939,19 @@ function saveWorkout(){
   const dur = parseInt($("#w-dur").value, 10);
   const note = $("#w-note").value.trim();
   const date = $("#w-date").value || todayStr();
+  const ex = readExClean();
+  /* detect new personal records before saving */
+  const prs = [];
+  ex.forEach(x => { if(x.kg > 0 && x.kg > bestKg(x.n, M.editId)) prs.push(esc(x.n) + " " + x.kg + "kg"); });
   if(M.editId){
     const w = S.workouts.find(x=>x.id===M.editId); if(!w) return;
-    w.type = M.wt; w.dur = isNaN(dur)?0:dur; w.note = note; w.date = date;
-    save(); closeModal(); render(); route(); toast("Updated ✓");
+    w.type = M.wt; w.dur = isNaN(dur)?0:dur; w.note = note; w.date = date; w.ex = ex;
+    save(); closeModal(); render(); route(); toast(prs.length ? "🏆 New PR: " + prs[0] : "Updated ✓");
     return;
   }
-  S.workouts.push({ id:uid(), type:M.wt, dur:isNaN(dur)?0:dur, note, date });
-  save(); closeModal(); render(); toast("Workout logged 💪");
+  S.workouts.push({ id:uid(), type:M.wt, dur:isNaN(dur)?0:dur, note, date, ex });
+  save(); closeModal(); render();
+  toast(prs.length ? "🏆 New PR: " + prs[0] : "Workout logged 💪");
 }
 function delWorkout(id){
   confirmBox("Delete this workout?", ()=>{
@@ -870,15 +960,27 @@ function delWorkout(id){
 }
 function pageWorkout(id){
   const w = S.workouts.find(x=>x.id===id); if(!w) return null;
+  const vol = volume(w);
+  const exHtml = (w.ex||[]).length ?
+    `<div class="card"><h2 style="margin:0 0 6px;font-size:.95rem">Exercises</h2>` +
+    w.ex.map(x => {
+      const isPR = x.kg > 0 && x.kg >= bestKg(x.n);
+      return `<div class="spread" style="padding:8px 0;border-bottom:1px solid var(--line)">
+        <span style="font-size:.9rem">${esc(x.n)}${isPR ? " 🏆" : ""}</span>
+        <b style="font-size:.88rem">${x.sets && x.reps ? x.sets + "×" + x.reps : ""}${x.kg ? " @ " + x.kg + "kg" : ""}</b></div>`;
+    }).join("") +
+    (vol ? `<div class="spread" style="padding:10px 0 2px"><span class="sub">Total volume</span><b>${fmtVol(vol)}</b></div>` : "") +
+    `</div>` : "";
   return pageHead("Workout") +
     `<div class="big-ico">${wIcon(w.type)}</div>
      <div class="big-amt" style="font-size:1.4rem">${esc(w.type)}</div>
-     <div class="big-sub">${fmtDay(w.date)}${w.dur ? " · " + w.dur + " min" : ""}</div>
-     <div class="card">` +
+     <div class="big-sub">${fmtDay(w.date)}${w.dur ? " · " + w.dur + " min" : ""}${(w.ex||[]).length ? " · " + w.ex.length + " exercises" : ""}</div>` +
+    exHtml +
+    `<div class="card">` +
     field("Type", wIcon(w.type) + " " + esc(w.type)) +
     field("Date", fmtDayFull(w.date)) +
     field("Duration", w.dur ? w.dur + " minutes" : "—") +
-    (w.note ? field("Exercises / note", esc(w.note)) : "") +
+    (w.note ? field("Note", esc(w.note)) : "") +
     `</div>` +
     pageActions(`openWorkout('${w.id}')`, `delWorkout('${w.id}')`);
 }
@@ -924,11 +1026,58 @@ function saveSleep(){
   S.sleep[$("#sl-date").value || todayStr()] = h;
   save(); closeModal(); render(); toast("Sleep logged ✓");
 }
+/* ---- system notifications ---- */
+async function sysNotify(title, body){
+  try{
+    if(!("Notification" in window) || Notification.permission !== "granted") return false;
+    if("serviceWorker" in navigator){
+      const reg = await navigator.serviceWorker.getRegistration();
+      if(reg && reg.showNotification){
+        await reg.showNotification(title, { body, icon:"icon.svg", badge:"icon.svg", vibrate:[300,120,300], tag:"lifehub-remind", renotify:true });
+        return true;
+      }
+    }
+    new Notification(title, { body });
+    return true;
+  }catch(e){ return false; }
+}
+function askNotifPerm(){
+  try{
+    if(!("Notification" in window)) return;
+    if(Notification.permission === "granted"){ setupPeriodicSync(); return; }
+    if(Notification.permission === "denied"){ toast("Notifications blocked — allow them in browser settings"); return; }
+    Notification.requestPermission().then(p => {
+      if(p === "granted"){
+        setupPeriodicSync();
+        sysNotify("LifeHub 🎉", "Notifications are working — reminders will look like this.");
+        renderGym();
+      } else toast("Without permission, reminders stay in-app only");
+    });
+  }catch(e){}
+}
+async function setupPeriodicSync(){
+  try{
+    const reg = await navigator.serviceWorker.ready;
+    if("periodicSync" in reg) await reg.periodicSync.register("lifehub-daily", { minInterval: 12*60*60*1000 });
+  }catch(e){}
+}
+function testNotify(){
+  if(("Notification" in window) && Notification.permission === "granted"){
+    sysNotify("Time to move! 🏃", "This is how your exercise reminders will look.")
+      .then(ok => { if(!ok) toast("Couldn't show a notification here"); });
+  } else askNotifPerm();
+}
+function notifState(){
+  if(!("Notification" in window)) return "unsupported";
+  return Notification.permission; /* granted | denied | default */
+}
+
 function toggleRemind(){
   S.remind.on = !S.remind.on;
   if(S.remind.on){
     S.remind.last = Date.now();
-    toast("I'll nudge you every " + S.remind.every + "h while the app is open");
+    askNotifPerm();
+    toast("I'll nudge you every " + S.remind.every + "h");
   } else toast("Reminders off");
   save(); renderGym();
 }
@@ -945,6 +1094,7 @@ function checkRemind(){
 function fireRemind(){
   try{ if(navigator.vibrate) navigator.vibrate([300,120,300]); }catch(e){}
   $("#banner").classList.add("on");
+  sysNotify("Time to move! 🏃", "Stand up, stretch, do a few squats or a quick walk.");
 }
 function dismissBanner(){ $("#banner").classList.remove("on"); }
 
@@ -954,21 +1104,48 @@ function renderGym(){
   const mins = wk.reduce((a,w)=>a+(w.dur||0),0);
   const mk = monthKey(t);
   const mCount = S.workouts.filter(w => monthKey(w.date)===mk).length;
+  const wkVol = wk.reduce((a,w)=>a+volume(w),0);
   $("#gym-stats").innerHTML =
     statCard("This week", wk.length + (wk.length===1?" workout":" workouts"), "pri") +
     statCard("Active minutes (wk)", mins + " min", "grn") +
     statCard("This month", mCount + (mCount===1?" workout":" workouts"), "amb") +
-    statCard("Total logged", S.workouts.length, "");
+    statCard("Volume (wk)", wkVol ? fmtVol(wkVol) : "—", "blu");
+
+  /* personal records */
+  const best = {};
+  S.workouts.forEach(w => (w.ex||[]).forEach(x => {
+    const k = x.n.toLowerCase();
+    if(x.kg > 0 && x.kg > (best[k] ? best[k].kg : 0)) best[k] = { n:x.n, kg:x.kg, reps:x.reps };
+  }));
+  const tops = Object.values(best).sort((a,b)=>b.kg-a.kg).slice(0,6);
+  $("#pr-card").style.display = tops.length ? "" : "none";
+  $("#pr-list").innerHTML = tops.map(b =>
+    `<div class="spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span style="font-size:.88rem">${esc(b.n)}</span><b>${b.kg} kg${b.reps ? " × " + b.reps : ""}</b></div>`).join("");
+
+  /* 8-week volume chart */
+  const vols = [];
+  const monNow = weekStart(t);
+  for(let i=7;i>=0;i--){
+    const ws = addDays(monNow, -7*i), we = addDays(ws, 6);
+    vols.push(S.workouts.filter(w => w.date >= ws && w.date <= we).reduce((a,w)=>a+volume(w),0));
+  }
+  $("#vol-card").style.display = vols.some(v=>v>0) ? "" : "none";
+  $("#vol-chart").innerHTML = barsSVG(vols, "#2bd984") +
+    `<div class="spread" style="margin-top:4px"><span class="sub" style="font-size:.7rem">8 weeks ago</span><span class="sub" style="font-size:.7rem">this week</span></div>`;
   /* reminders */
   const r = S.remind;
   const tg = $("#remind-toggle");
   tg.textContent = r.on ? "On ✓" : "Off";
   tg.style.cssText = r.on ? "background:rgba(43,217,132,.15);border-color:var(--grn);color:var(--grn)" : "";
+  const np = notifState();
   $("#remind-body").innerHTML = r.on ? `
     <div class="sub" style="margin-bottom:8px">Nudge me every…</div>
     <div class="chips">${[2,3,4,6].map(h=>`<button class="chip ${r.every===h?"on":""}" onclick="setRemindEvery(${h})">${h} hours</button>`).join("")}</div>
-    <div class="sub">Every day, ${r.from}:00–${r.to}:00. A banner pops up with vibration — keep the app open in the background for nudges to appear.</div>`
-    : `<div class="sub">Turn on to get "time to move" nudges every few hours, every day, while the app is open.</div>`;
+    <div class="sub" style="margin-bottom:10px">Every day, ${r.from}:00–${r.to}:00. ${np==="granted"
+      ? "Reminders show as real notifications — vibration, lock screen and all — while the app is open or in the background. 🔔"
+      : "Allow notifications to get them on your lock screen with vibration, even with the screen off."}</div>
+    <button class="btn btn-g" style="width:100%" onclick="testNotify()">${np==="granted" ? "🔔 Send a test notification" : "🔔 Turn on notifications"}</button>`
+    : `<div class="sub">Turn on to get "time to move" nudges every few hours, every day — as real phone notifications.</div>`;
   /* water */
   const w = S.water[t]||0;
   $("#water-count").innerHTML = `<b>${w}</b> / ${S.waterGoal} glasses`;
@@ -1000,8 +1177,9 @@ function renderGym(){
   let html = "", lastD = "";
   sorted.forEach(w => {
     if(w.date !== lastD){ html += `<div class="date-head">${fmtDay(w.date)}</div>`; lastD = w.date; }
+    const exSub = (w.ex||[]).length ? w.ex.map(x=>esc(x.n)).join(", ") : esc(w.note);
     html += `<div class="item" onclick="openDetail('wo','${w.id}')"><div class="ico">${wIcon(w.type)}</div>
-      <div class="bd"><div class="t">${esc(w.type)}${w.dur?` · ${w.dur} min`:""}</div>${w.note?`<div class="s">${esc(w.note)}</div>`:""}</div></div>`;
+      <div class="bd"><div class="t">${esc(w.type)}${w.dur?` · ${w.dur} min`:""}${volume(w)?` · ${fmtVol(volume(w))}`:""}</div>${exSub?`<div class="s">${exSub}</div>`:""}</div></div>`;
   });
   $("#workout-list").innerHTML = html;
 }
