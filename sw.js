@@ -1,6 +1,11 @@
 /* LifeHub service worker — offline cache + notifications */
-const CACHE = "lifehub-v3";
-const FILES = ["./", "./index.html", "./app.js", "./style.css", "./manifest.webmanifest", "./icon.svg", "./icon-maskable.svg", "./LifeHub.html"];
+const CACHE = "lifehub-v4";
+const FILES = [
+  "./", "./index.html", "./style.css", "./manifest.webmanifest",
+  "./util.js", "./charts.js", "./store.js", "./ui.js", "./money.js", "./planner.js",
+  "./gym.js", "./health.js", "./habits.js", "./home.js", "./settings.js", "./main.js",
+  "./icon.svg", "./icon-maskable.svg", "./LifeHub.html"
+];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
