@@ -1,5 +1,5 @@
 /* LifeHub service worker — offline cache + notifications */
-const CACHE = "lifehub-v6";
+const CACHE = "lifehub-v7";
 const FILES = [
   "./", "./index.html", "./style.css", "./manifest.webmanifest",
   "./util.js", "./charts.js", "./store.js", "./ui.js", "./money.js", "./planner.js",

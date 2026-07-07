@@ -14,7 +14,7 @@ const DEFWTYPES = [{e:"🏋️",n:"Push"},{e:"💪",n:"Pull"},{e:"🦵",n:"Legs"
 
 function DEF(){
   return JSON.parse(JSON.stringify({
-    v:2, name:"hiuc", balance:null, hideBal:false, budget:null, waterGoal:8,
+    v:2, name:"hiuc", balance:null, hideBal:false, budget:null, waterGoal:8, restSec:90,
     cats: DEFCATS, wtypes: DEFWTYPES,
     tx:[], tasks:[], events:[], habits:[], workouts:[], weights:[], recur:[], routines:[], customEx:[],
     water:{}, sleep:{}, activeWo:null,
@@ -36,7 +36,7 @@ function normEx(list){
 function normalize(d){
   const s = DEF();
   if(!d || typeof d !== "object") return s;
-  const copy = ["name","balance","hideBal","budget","waterGoal","tx","tasks","habits","workouts","weights","recur","routines","customEx","activeWo"];
+  const copy = ["name","balance","hideBal","budget","waterGoal","restSec","tx","tasks","habits","workouts","weights","recur","routines","customEx","activeWo"];
   copy.forEach(k => { if(d[k] !== undefined) s[k] = d[k]; });
   if(d.water && typeof d.water === "object") s.water = d.water;
   if(d.sleep && typeof d.sleep === "object") s.sleep = d.sleep;

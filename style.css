@@ -166,10 +166,16 @@ input[type="date"],input[type="time"]{color-scheme:dark}
 /* gym app (own tab bar) */
 .gymapp{position:fixed;inset:0;background:var(--bg);z-index:70;overflow-y:auto;display:none}
 .gymapp.on{display:block;animation:slide .2s ease}
-.ga-in{max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
-.ga-tabs{display:flex;gap:6px;margin-bottom:14px}
-.ga-tabs button{flex:1;background:var(--card);border:1px solid var(--line);color:var(--mut);padding:10px 4px;border-radius:12px;font-weight:700;font-family:inherit;font-size:.78rem;cursor:pointer}
-.ga-tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.ga-in{max-width:520px;margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) 16px calc(120px + env(safe-area-inset-bottom))}
+.ga-tabs{position:fixed;bottom:0;left:0;right:0;background:rgba(13,17,28,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;max-width:520px;margin:0 auto;padding:8px 6px calc(14px + env(safe-area-inset-bottom));z-index:75}
+.ga-tabs button{flex:1;background:none;border:none;color:var(--dim);font-size:.62rem;font-weight:650;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit;padding:4px 0}
+.ga-tabs button .gi svg{width:21px;height:21px;display:block}
+.ga-tabs button.on{color:var(--pri2)}
+
+/* rest timer pill */
+.rest-pill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));z-index:95;background:var(--card2);border:1px solid var(--pri);border-radius:16px;padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 10px 34px rgba(0,0,0,.5);width:min(92%,480px)}
+.rest-pill .rb{flex:1;height:6px;background:var(--card);border-radius:4px;overflow:hidden}
+.rest-pill .rb div{height:100%;background:var(--grad)}
 
 /* exercise svg icons */
 .gico svg{width:20px;height:20px;color:var(--mut);display:block}

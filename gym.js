@@ -19,6 +19,15 @@ function bestKg(name, exceptId){
 }
 function openExPage(name){ openDetail("ex", encodeURIComponent(name)); }
 function setsLabel(x){ return (x.sets||[]).map(s => `${s.kg||0}×${s.reps||0}`).join(" · "); }
+function e1rm(kg, reps){ return (kg > 0 && reps > 0) ? Math.round(kg * (1 + reps/30)) : 0; }
+function exBest1rm(x){ return (x.sets||[]).reduce((a,s)=>Math.max(a, e1rm(s.kg, s.reps)), 0); }
+function streakWeeks(){
+  let n = 0, mon = weekStart(todayStr());
+  const has = ws => S.workouts.some(w => w.date >= ws && w.date <= addDays(ws,6));
+  if(!has(mon)) mon = addDays(mon,-7);
+  while(has(mon)){ n++; mon = addDays(mon,-7); }
+  return n;
+}
 
 function exSessions(name){
   const out = [];
@@ -30,6 +39,7 @@ function exSessions(name){
         top: Math.max.apply(null, xs.map(exTop)),
         vol: xs.reduce((a,x)=>a+exVol(x),0),
         reps: xs.reduce((a,x)=>a+exReps(x),0),
+        rm: Math.max.apply(null, xs.map(exBest1rm)),
         label: xs.map(setsLabel).join(" · ")
       });
     }
@@ -48,10 +58,13 @@ function pageExercise(name){
       <div style="font-size:.92rem;font-weight:600">${esc(info.m)}</div></div>
     <div class="card"><h2 style="margin:0 0 6px;font-size:.95rem">How to do it</h2>
       <p class="sub" style="line-height:1.55;font-size:.88rem">${esc(info.how)}</p></div>` : "";
+  const bestRm = ses.length ? Math.max.apply(null, ses.map(s=>s.rm)) : 0;
   const chartsHtml = ses.length ? `
     <div class="grid2" style="margin-bottom:12px">
       ${statCard("Sessions", ses.length, "pri")}
+      ${statCard("Est. 1RM", bestRm ? bestRm + " kg" : "—", "blu")}
       ${statCard("Total volume", fmtVol(totVol), "grn")}
+      ${statCard("Best reps (session)", Math.max.apply(null, ses.map(s=>s.reps)), "amb")}
     </div>
     <div class="card"><h2 style="margin:0 0 8px;font-size:.95rem">Top weight per session</h2>${progressSVG(ses.map(s=>s.top), "#2bd984", "kg")}</div>
     <div class="card"><h2 style="margin:0 0 8px;font-size:.95rem">Total reps per session</h2>${progressSVG(ses.map(s=>s.reps), "#ffb454", "")}</div>
@@ -122,10 +135,39 @@ function setVal(ei, si, f, v){
   save();
 }
 function toggleSetDone(ei, si){
-  const x = S.activeWo && S.activeWo.ex[ei]; if(!x || !x.sets[si]) return;
+  const a = S.activeWo; const x = a && a.ex[ei]; if(!x || !x.sets[si]) return;
   x.sets[si].done = !x.sets[si].done;
+  if(x.sets[si].done && !a.routineMode) a.restEnd = Date.now() + (S.restSec||90)*1000;
   save(); route();
 }
+
+/* ---- rest timer ---- */
+function setRestSec(s){ S.restSec = s; save(); route(); }
+function skipRest(){ if(S.activeWo){ S.activeWo.restEnd = null; save(); route(); } }
+function extendRest(){ if(S.activeWo && S.activeWo.restEnd){ S.activeWo.restEnd += 30000; save(); tickRest(); } }
+function fmtLeft(ms){
+  const s = Math.max(0, Math.ceil(ms/1000));
+  return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0");
+}
+function tickRest(){
+  const a = S.activeWo;
+  if(!a || !a.restEnd) return;
+  const left = a.restEnd - Date.now();
+  if(left <= 0){
+    a.restEnd = null; save();
+    try{ if(navigator.vibrate) navigator.vibrate([200,80,200]); }catch(e){}
+    try{ if(typeof sysNotify === "function") sysNotify("Rest over 💪", "Time for the next set."); }catch(e){}
+    if(location.hash === "#d/session/active") route();
+    return;
+  }
+  const el = $("#rest-left");
+  if(el){
+    el.textContent = fmtLeft(left);
+    const bar = $("#rest-bar");
+    if(bar) bar.style.width = Math.max(0, left/((S.restSec||90)*1000)*100) + "%";
+  }
+}
+setInterval(tickRest, 1000);
 function addSet(ei){
   const x = S.activeWo && S.activeWo.ex[ei]; if(!x) return;
   const last = x.sets[x.sets.length-1];
@@ -180,13 +222,20 @@ function pageSession(){
       <input class="inp" id="rt-name" placeholder="e.g. Push day A" value="${escq(a.rtName||"")}" oninput="S.activeWo.rtName=this.value;save()">`
       : `<div class="spread" style="margin-bottom:10px"><span class="sub">⏱ ${a.editId ? fmtDay(a.date) : mins + " min"}</span><span class="sub">${a.ex.length} exercise${a.ex.length===1?"":"s"} · ${fmtVol(volume(a))}</span></div>`) +
     `<div class="chips" style="margin-bottom:10px">${typeChips}</div>` +
+    (a.routineMode ? "" : `<div class="row" style="gap:6px;margin-bottom:10px;flex-wrap:wrap"><span class="sub" style="font-size:.75rem">Rest timer</span>${[60,90,120,180].map(s =>
+      `<button class="chip ${((S.restSec||90)===s)?"on":""}" style="padding:5px 10px;font-size:.75rem" onclick="setRestSec(${s})">${s}s</button>`).join("")}</div>`) +
     exCards +
     `<button class="btn btn-g" style="width:100%;margin:4px 0 14px" onclick="openExLib(true)">+ Add exercise</button>` +
     (a.routineMode ? "" : `<input class="inp" placeholder="Note — how did it go?" value="${escq(a.note||"")}" oninput="setWoNote(this.value)">`) +
     `<div class="row" style="gap:10px">
       <button class="btn btn-d" style="flex:1" onclick="discardSession()">Discard</button>
       <button class="btn btn-p" style="flex:2" onclick="finishSession()">${a.routineMode ? "💾 Save routine" : "✓ Finish workout"}</button>
-    </div>`;
+    </div>` +
+    (!a.routineMode && a.restEnd && a.restEnd > Date.now() ?
+      `<div class="rest-pill"><b style="font-size:.85rem">Rest</b><span id="rest-left" style="font-weight:800;font-size:1rem">${fmtLeft(a.restEnd - Date.now())}</span>
+       <div class="rb"><div id="rest-bar" style="width:${Math.max(0,(a.restEnd-Date.now())/((S.restSec||90)*1000)*100)}%"></div></div>
+       <button class="btn btn-g mini" onclick="extendRest()">+30s</button>
+       <button class="btn btn-g mini" onclick="skipRest()">Skip</button></div>` : "");
 }
 function cleanSessionEx(){
   return S.activeWo.ex
@@ -238,6 +287,19 @@ function delWorkout(id){
     S.workouts = S.workouts.filter(w=>w.id!==id); save(); goBack(); toast("Deleted");
   });
 }
+function repeatWorkout(id){
+  if(S.activeWo && !S.activeWo.routineMode){
+    toast("Finish or discard the current workout first");
+    openDetail("session","active");
+    return;
+  }
+  const w = S.workouts.find(x=>x.id===id); if(!w) return;
+  S.activeWo = {
+    routineMode:false, editId:null, type:w.type, date:todayStr(), start:Date.now(), note:"",
+    ex:(w.ex||[]).map(x=>({ n:x.n, sets:x.sets.map(s=>({reps:s.reps, kg:s.kg, done:false})) }))
+  };
+  save(); openDetail("session","active");
+}
 function pageWorkout(id){
   const w = S.workouts.find(x=>x.id===id); if(!w) return null;
   const vol = volume(w);
@@ -263,7 +325,8 @@ function pageWorkout(id){
     field("Duration", w.dur ? w.dur + " minutes" : "—") +
     (w.note ? field("Note", esc(w.note)) : "") +
     `</div>` +
-    ((w.ex||[]).length ? `<button class="btn btn-g" style="width:100%;margin-top:4px" onclick="saveAsRoutine('${w.id}')">💾 Save as routine</button>` : "") +
+    ((w.ex||[]).length ? `<button class="btn btn-p" style="width:100%;margin-top:4px" onclick="repeatWorkout('${w.id}')">↻ Repeat this workout</button>
+     <button class="btn btn-g" style="width:100%;margin-top:10px" onclick="saveAsRoutine('${w.id}')">💾 Save as routine</button>` : "") +
     pageActions(`editWorkout('${w.id}')`, `delWorkout('${w.id}')`);
 }
 
@@ -370,10 +433,14 @@ function gymTrainHTML(){
       <button class="btn btn-g mini" style="flex:none" onclick="startSession('${r.id}')">▶ Start</button></div>`).join("")
     : `<div class="sub" style="padding:4px 0">Build a routine once, start it in one tap — sets prefilled from last time.</div>`;
   const last = [...S.workouts].sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const stk = streakWeeks();
+  const wkVol = wk.reduce((a,w)=>a+volume(w),0);
   return `<div class="gym-hero">${hero}</div>
     <div class="grid2" style="margin-bottom:12px">
       ${statCard("This week", wk.length + (wk.length===1?" workout":" workouts"), "grn")}
       ${statCard("Active minutes", mins + " min", "blu")}
+      ${statCard("Week streak", stk ? stk + " week" + (stk>1?"s":"") + " 🔥" : "—", "amb")}
+      ${statCard("Volume (wk)", wkVol ? fmtVol(wkVol) : "—", "pri")}
     </div>
     <div class="card">
       <div class="spread"><h2 style="margin:0;font-size:.95rem">Routines</h2><button class="btn btn-g mini" onclick="startRoutineBuilder()">+ New</button></div>
@@ -410,13 +477,14 @@ function gymStatsHTML(){
     const ses = exSessions(exSel);
     const MET = {
       kg:  { vals: ses.map(s=>s.top),  color:"#2bd984", unit:"kg", label:"Weight" },
+      rm:  { vals: ses.map(s=>s.rm),   color:"#22d3ee", unit:"kg", label:"1RM" },
       reps:{ vals: ses.map(s=>s.reps), color:"#ffb454", unit:"",   label:"Reps" },
       vol: { vals: ses.map(s=>s.vol),  color:"#7c5cff", unit:"",   label:"Volume" }
     };
     const m = MET[gymMetric] || MET.kg;
     out += `<div class="card">
       <h2 style="margin:0 0 10px;font-size:.95rem">Exercise progress</h2>
-      <div class="seg" style="margin-bottom:10px">${["kg","reps","vol"].map(k =>
+      <div class="seg" style="margin-bottom:10px">${["kg","rm","reps","vol"].map(k =>
         `<button class="${gymMetric===k?"on":""}" onclick="setGymMetric('${k}')">${MET[k].label}</button>`).join("")}</div>
       <div class="chips">${names.map(n =>
         `<button class="chip ${n.toLowerCase()===exSel.toLowerCase()?"on":""}" onclick="pickProg('${escq(n)}')">${esc(n)}</button>`).join("")}</div>
